@@ -19,7 +19,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Install Godot 4.7.1 and export templates
         shell: bash
@@ -63,7 +63,7 @@ jobs:
           (cd build/windows && zip -9 ../../dist/DLK-Simulation-Windows-x86_64.zip ./*)
 
       - name: Upload workflow artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: DLK-Simulation-${{ github.sha }}
           path: dist/*.zip
