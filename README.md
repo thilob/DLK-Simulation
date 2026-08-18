@@ -33,10 +33,13 @@ Ein bewusst generisches 3D-Lernprojekt für die Bedienung einer Feuerwehr-Drehle
 | R | Szene neu starten; Gebäude und Ziel werden neu gewählt |
 | F11 | zwischen Vollbild und 1280×720-Fenster wechseln |
 | Escape | Sicherheitsabfrage zum Beenden öffnen |
+| + / − | aktive Kamera hinein-/herauszoomen |
 
 Bei Bodenkontakt ist der seitliche Ausschub der gewählten Stütze in beiden Richtungen verriegelt. Vor dem Ein- oder Ausfahren muss der Stempel mit `I` so weit angehoben werden, dass kein Bodenkontakt mehr besteht. Das HUD zeigt dann `quer frei` an.
 
 Die Simulation startet standardmäßig im Vollbildmodus. Die 3D-Ansicht nutzt das aktuelle Bildschirmformat; HUD, Fadenkreuz und Zielhinweis werden anhand einer Referenzauflösung von 1280×720 skaliert und am Bildschirm verankert.
+
+Jede Kamera speichert ihren eigenen Zoomwert. `+` verkleinert das Sichtfeld und zoomt hinein, `−` vergrößert das Sichtfeld und zoomt heraus. Haupttastatur und Ziffernblock werden unterstützt; das HUD zeigt das aktuelle Sichtfeld in Grad.
 
 ### Joystick
 

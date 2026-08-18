@@ -40,6 +40,9 @@ const FLOOR_HEIGHT = 2.85
 const LADDER_COLLISION_RADIUS = 0.52
 const BASKET_COLLISION_HALF = Vector3(0.66, 0.62, 0.48)
 const CAMERA_FOLLOW_SPEED = 4.5
+const CAMERA_ZOOM_SPEED = 38.0
+const CAMERA_MIN_FOV = 24.0
+const CAMERA_MAX_FOV = 92.0
 
 var input_adapter = InputAdapter.new()
 var stabilizer_controller = StabilizerController.new(SUPPORT_MAX_OUT, SUPPORT_MAX_DOWN, SUPPORT_SPEED, SUPPORT_DEPLOY_THRESHOLD)
@@ -104,6 +107,7 @@ func _physics_process(delta):
     _update_ladder(delta)
     _update_basket_level()
     collision_warning = _geometry_hits_building()
+    _update_camera_zoom(delta)
     _update_cameras(delta)
     _check_target()
     if movement_blocked_timer > 0.0:
@@ -133,6 +137,12 @@ func _add_key(action_name, keycode):
     if not InputMap.action_has_event(action_name, ev):
         InputMap.action_add_event(action_name, ev)
 
+func _add_logical_key(action_name, keycode):
+    var ev = InputEventKey.new()
+    ev.keycode = keycode
+    if not InputMap.action_has_event(action_name, ev):
+        InputMap.action_add_event(action_name, ev)
+
 func _add_joy_axis(action_name, axis_id, axis_value):
     var ev = InputEventJoypadMotion.new()
     ev.axis = axis_id
@@ -146,7 +156,7 @@ func _setup_input_map():
         "extend_ladder", "retract_ladder", "support_out", "support_in",
         "support_down", "support_up", "select_support_1", "select_support_2",
         "select_support_3", "select_support_4", "camera_cycle", "reset_demo",
-        "fullscreen_toggle", "quit_request"
+        "fullscreen_toggle", "quit_request", "camera_zoom_in", "camera_zoom_out"
     ]
     for action_name in actions:
         _ensure_action(action_name, 0.08)
@@ -169,6 +179,10 @@ func _setup_input_map():
     _add_key("reset_demo", KEY_R)
     _add_key("fullscreen_toggle", KEY_F11)
     _add_key("quit_request", KEY_ESCAPE)
+    _add_logical_key("camera_zoom_in", KEY_PLUS)
+    _add_logical_key("camera_zoom_out", KEY_MINUS)
+    _add_key("camera_zoom_in", KEY_KP_ADD)
+    _add_key("camera_zoom_out", KEY_KP_SUBTRACT)
 
     # Generic joystick layout:
     # left X = slew, left Y = elevation, right Y = telescope.
@@ -873,7 +887,7 @@ func _build_hud():
 
     hud_labels["title"].add_theme_font_size_override("font_size",11)
     hud_labels["title"].text = "DLK 23/12 – Drehkranz-Bedienstand"
-    hud_labels["help"].text = "W/S Aufrichten | D/A links/rechts drehen | E/Q Teleskop\n1–4 Stütze | K/J seitlich | L/I Stempel | C Kamera | R Neustart | F11 Vollbild | Esc Beenden"
+    hud_labels["help"].text = "W/S Aufrichten | D/A links/rechts drehen | E/Q Teleskop | +/- Zoom\n1–4 Stütze | K/J seitlich | L/I Stempel | C Kamera | R Neustart | F11 Vollbild | Esc Beenden"
 
     var center = Label.new()
     center.text = "+"
@@ -1050,12 +1064,22 @@ func _update_hud():
     elif movement_blocked_text != "":
         collision_text = movement_blocked_text
     hud_labels["collision"].text = "KOLLISIONSSCHUTZ: %s" % collision_text
-    hud_labels["camera"].text = "KAMERA: %s" % camera_names[active_camera]
+    hud_labels["camera"].text = "KAMERA: %s | Zoom/FOV %.0f°" % [camera_names[active_camera],cameras[active_camera].fov]
     hud_labels["score"].text = "PUNKTE: %d" % score
 
 func _cycle_camera():
     active_camera = (active_camera + 1) % cameras.size()
     _set_camera(active_camera)
+
+func _update_camera_zoom(delta: float):
+    if cameras.is_empty():
+        return
+    # Input.get_axis returns -1 for plus (zoom in) and +1 for minus (zoom out).
+    # FOV is stored by each Camera3D, so every view keeps its individual zoom.
+    var zoom_axis = Input.get_axis("camera_zoom_in","camera_zoom_out")
+    if abs(zoom_axis) > 0.001:
+        var active = cameras[active_camera]
+        active.fov = clamp(active.fov+zoom_axis*CAMERA_ZOOM_SPEED*delta,CAMERA_MIN_FOV,CAMERA_MAX_FOV)
 
 func _toggle_fullscreen():
     var window = get_window()
