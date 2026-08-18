@@ -14,6 +14,9 @@ const SUPPORT_MAX_OUT = 2.25
 const SUPPORT_MAX_DOWN = 1.05
 const SUPPORT_SPEED = 0.75
 const SUPPORT_DEPLOY_THRESHOLD = 0.68
+# The controller keeps a normalized 1.05 m demo stroke. The visible jack only
+# needs this travel from its stowed pose until the 0.10 m foot meets the road.
+const SUPPORT_VISUAL_MAX_DOWN = 0.17
 
 const SLEW_SPEED = 20.0 * PI / 180.0
 const ELEVATION_SPEED = 11.0 * PI / 180.0
@@ -59,8 +62,10 @@ var basket_approach_point
 var building_root
 var building_body
 var building_total_height = 0.0
+var scenery_root
 var target_window
 var target_marker
+var target_person
 
 var active_camera = 0
 var operator_camera
@@ -84,6 +89,7 @@ func _ready():
     _build_world()
     _build_vehicle()
     _build_building()
+    _build_surroundings()
     _build_cameras()
     _build_hud()
     _apply_ladder_geometry()
@@ -108,6 +114,8 @@ func _physics_process(delta):
         _cycle_camera()
     if Input.is_action_just_pressed("reset_demo"):
         get_tree().reload_current_scene()
+    if Input.is_action_just_pressed("fullscreen_toggle"):
+        _toggle_fullscreen()
 
 func _ensure_action(action_name, deadzone):
     if not InputMap.has_action(action_name):
@@ -133,13 +141,14 @@ func _setup_input_map():
         "turn_left", "turn_right", "raise_ladder", "lower_ladder",
         "extend_ladder", "retract_ladder", "support_out", "support_in",
         "support_down", "support_up", "select_support_1", "select_support_2",
-        "select_support_3", "select_support_4", "camera_cycle", "reset_demo"
+        "select_support_3", "select_support_4", "camera_cycle", "reset_demo",
+        "fullscreen_toggle"
     ]
     for action_name in actions:
         _ensure_action(action_name, 0.08)
 
-    _add_key("turn_left", KEY_A)
-    _add_key("turn_right", KEY_D)
+    _add_key("turn_left", KEY_D)
+    _add_key("turn_right", KEY_A)
     _add_key("raise_ladder", KEY_W)
     _add_key("lower_ladder", KEY_S)
     _add_key("extend_ladder", KEY_E)
@@ -154,6 +163,7 @@ func _setup_input_map():
     _add_key("select_support_4", KEY_4)
     _add_key("camera_cycle", KEY_C)
     _add_key("reset_demo", KEY_R)
+    _add_key("fullscreen_toggle", KEY_F11)
 
     # Generic joystick layout:
     # left X = slew, left Y = elevation, right Y = telescope.
@@ -211,6 +221,18 @@ func _cylinder(parent, node_name, radius, height, pos, color, rotation_degrees =
     parent.add_child(mi)
     return mi
 
+func _sphere(parent, node_name, radius, pos, color):
+    var mi = MeshInstance3D.new()
+    mi.name = node_name
+    var mesh = SphereMesh.new()
+    mesh.radius = radius
+    mesh.height = radius * 2.0
+    mi.mesh = mesh
+    mi.position = pos
+    mi.material_override = _mat(color, 0.0, 0.72)
+    parent.add_child(mi)
+    return mi
+
 func _bar_between(parent, node_name, a, b, thickness, color):
     var midpoint = (a + b) * 0.5
     var length = a.distance_to(b)
@@ -259,9 +281,9 @@ func _build_world():
     add_child(sun)
 
     _box(self, "Ground", Vector3(100, 0.2, 100), Vector3(0, -0.1, 0), Color(0.25, 0.43, 0.23))
-    _box(self, "Road", Vector3(13.0, 0.045, 50.0), Vector3(0, 0.035, 0), Color(0.18, 0.19, 0.20))
-    _box(self, "RoadStripeL", Vector3(0.10, 0.02, 48.0), Vector3(-4.1, 0.07, 0), Color(0.82,0.82,0.78))
-    _box(self, "RoadStripeR", Vector3(0.10, 0.02, 48.0), Vector3(4.1, 0.07, 0), Color(0.82,0.82,0.78))
+    _box(self, "Road", Vector3(13.0, 0.045, 100.0), Vector3(0, 0.035, 0), Color(0.18, 0.19, 0.20))
+    _box(self, "RoadStripeL", Vector3(0.10, 0.02, 98.0), Vector3(-4.1, 0.07, 0), Color(0.82,0.82,0.78))
+    _box(self, "RoadStripeR", Vector3(0.10, 0.02, 98.0), Vector3(4.1, 0.07, 0), Color(0.82,0.82,0.78))
 
 func _build_vehicle():
     vehicle_root = Node3D.new()
@@ -406,9 +428,12 @@ func _build_building():
     building_root.name = "TrainingBuilding"
     add_child(building_root)
 
-    var angle = randf_range(0.0, TAU)
+    # Keep the exercise building on either side of the longitudinal road. A
+    # small longitudinal offset provides variety without allowing its footprint
+    # to overlap the road or sidewalks.
+    var side = -1.0 if randf() < 0.5 else 1.0
     var distance = randf_range(BUILDING_MIN_CENTER_DISTANCE, BUILDING_MAX_CENTER_DISTANCE)
-    building_root.position = Vector3(sin(angle) * distance, 0, cos(angle) * distance)
+    building_root.position = Vector3(side * distance, 0, randf_range(-3.0,3.0))
     building_root.look_at(Vector3(0,0,0), Vector3.UP)
 
     var wall = Color(0.74,0.69,0.61)
@@ -469,6 +494,143 @@ func _build_building():
     # Side wall accents make the house read as a building from oblique views.
     for y in [2.2, 5.0, 7.8, 10.6]:
         _box(building_root, "FacadeBand", Vector3(BUILDING_WIDTH+0.05,0.08,0.08), Vector3(0,y,-BUILDING_DEPTH/2.0-0.06), wall_dark)
+
+func _scenery_position_clear(pos: Vector3, target_clearance: float, vehicle_clearance: float) -> bool:
+    var flat_pos = Vector2(pos.x, pos.z)
+    if flat_pos.length() < vehicle_clearance:
+        return false
+    if building_root != null:
+        var building_flat = Vector2(building_root.position.x, building_root.position.z)
+        if flat_pos.distance_to(building_flat) < target_clearance:
+            return false
+    return true
+
+func _rectangles_overlap(center_a: Vector2, half_a: Vector2, center_b: Vector2, half_b: Vector2) -> bool:
+    return abs(center_a.x-center_b.x) < half_a.x+half_b.x and abs(center_a.y-center_b.y) < half_a.y+half_b.y
+
+func _house_footprint_clear(pos: Vector3, size: Vector3) -> bool:
+    var center = Vector2(pos.x,pos.z)
+    var half_size = Vector2(size.x/2.0+0.8,size.z/2.0+0.8)
+    # Transport surfaces are described in X/Z. Sidewalk sections deliberately
+    # stop at the cross street, where zebra crossings continue the foot route.
+    var forbidden_rects = [
+        [Vector2(0,0),Vector2(6.5,50.0)],
+        [Vector2(0,28.0),Vector2(43.0,4.5)],
+        [Vector2(-7.25,-13.25),Vector2(0.65,36.75)],
+        [Vector2(7.25,-13.25),Vector2(0.65,36.75)],
+        [Vector2(-7.25,41.25),Vector2(0.65,8.75)],
+        [Vector2(7.25,41.25),Vector2(0.65,8.75)]
+    ]
+    for rect in forbidden_rects:
+        if _rectangles_overlap(center,half_size,rect[0],rect[1]):
+            return false
+    return true
+
+func _create_scenery_house(pos: Vector3, size: Vector3, color: Color, index: int):
+    var house = Node3D.new()
+    house.name = "BackgroundHouse%d" % index
+    house.position = pos
+    scenery_root.add_child(house)
+    _box(house, "Facade", size, Vector3(0,size.y/2.0,0), color)
+    _box(house, "Roof", Vector3(size.x+0.35,0.35,size.z+0.35), Vector3(0,size.y+0.18,0), Color(0.24,0.12,0.08))
+    _box(house, "Door", Vector3(1.05,2.05,0.08), Vector3(0,1.03,-size.z/2.0-0.05), Color(0.19,0.12,0.07))
+    var floor_count = maxi(2, int(floor(size.y / 2.7)))
+    for floor_index in range(floor_count):
+        var window_y = 1.65 + float(floor_index) * 2.55
+        if window_y > size.y - 0.55:
+            continue
+        for side_x in [-1.0, 1.0]:
+            var window_x = side_x * min(1.65, size.x * 0.24)
+            _box(house, "Window", Vector3(1.05,1.25,0.06), Vector3(window_x,window_y,-size.z/2.0-0.05), Color(0.10,0.25,0.34))
+            _box(house, "WindowSill", Vector3(1.20,0.08,0.18), Vector3(window_x,window_y-0.68,-size.z/2.0-0.10), Color(0.82,0.82,0.78))
+
+func _create_shrub(pos: Vector3, scale_factor: float, index: int):
+    var shrub = Node3D.new()
+    shrub.name = "Shrub%d" % index
+    shrub.position = pos
+    scenery_root.add_child(shrub)
+    _cylinder(shrub, "Stem", 0.07*scale_factor, 0.55*scale_factor, Vector3(0,0.28*scale_factor,0), Color(0.24,0.14,0.06))
+    _sphere(shrub, "FoliageA", 0.48*scale_factor, Vector3(-0.20*scale_factor,0.72*scale_factor,0), Color(0.10,0.38,0.10))
+    _sphere(shrub, "FoliageB", 0.54*scale_factor, Vector3(0.24*scale_factor,0.78*scale_factor,0.05), Color(0.13,0.46,0.12))
+
+func _create_scenery_car(pos: Vector3, rotation_y: float, color: Color, index: int):
+    var car = Node3D.new()
+    car.name = "SceneryVehicle%d" % index
+    car.position = pos
+    car.rotation.y = rotation_y
+    scenery_root.add_child(car)
+    _box(car, "Body", Vector3(1.75,0.55,3.75), Vector3(0,0.63,0), color)
+    _box(car, "Cabin", Vector3(1.50,0.62,1.75), Vector3(0,1.12,-0.15), Color(0.12,0.23,0.30))
+    _box(car, "FrontGlass", Vector3(1.28,0.48,0.05), Vector3(0,1.18,-1.04), Color(0.07,0.16,0.22))
+    for wheel_z in [-1.22,1.22]:
+        for wheel_x in [-0.91,0.91]:
+            _cylinder(car, "Wheel", 0.32, 0.18, Vector3(wheel_x,0.35,wheel_z), Color(0.025,0.025,0.025), Vector3(0,0,90))
+
+func _build_surroundings():
+    scenery_root = Node3D.new()
+    scenery_root.name = "ProceduralSurroundings"
+    add_child(scenery_root)
+
+    var asphalt = Color(0.17,0.18,0.19)
+    var paving = Color(0.56,0.56,0.54)
+    var lawn = Color(0.29,0.52,0.22)
+    # A cross street and sidewalks frame the training area without narrowing
+    # the operational space around the aerial appliance.
+    _box(scenery_root, "CrossStreet", Vector3(86.0,0.045,9.0), Vector3(0,0.036,28.0), asphalt)
+    _box(scenery_root, "CrossStreetStripe", Vector3(82.0,0.018,0.10), Vector3(0,0.070,28.0), Color(0.88,0.78,0.18))
+    # Sidewalks stop at the cross street instead of covering its asphalt.
+    for sidewalk_x in [-7.25,7.25]:
+        _box(scenery_root, "SidewalkSouth", Vector3(1.30,0.16,73.5), Vector3(sidewalk_x,0.08,-13.25), paving)
+        _box(scenery_root, "SidewalkNorth", Vector3(1.30,0.16,17.5), Vector3(sidewalk_x,0.08,41.25), paving)
+        # White bars continue each pedestrian route across the cross street.
+        for crossing_index in range(9):
+            var crossing_z = 24.0+float(crossing_index)*1.0
+            _box(scenery_root,"ZebraStripe",Vector3(1.30,0.018,0.58),Vector3(sidewalk_x,0.070,crossing_z),Color(0.94,0.94,0.90))
+    _box(scenery_root, "LawnWest", Vector3(10.0,0.08,20.0), Vector3(-13.0,0.05,-14.0), lawn)
+    _box(scenery_root, "LawnEast", Vector3(10.0,0.08,20.0), Vector3(13.0,0.05,-14.0), lawn)
+
+    var parking_centers = [Vector3(-13.0,0,14.0), Vector3(13.0,0,14.0)]
+    var parking_index = 0
+    for parking_pos in parking_centers:
+        if not _scenery_position_clear(parking_pos, 8.5, 9.0):
+            continue
+        _box(scenery_root, "Parking%d" % parking_index, Vector3(8.0,0.055,10.5), parking_pos+Vector3(0,0.04,0), asphalt)
+        for line_x in [-3.0,-1.0,1.0,3.0]:
+            _box(scenery_root, "ParkingLine", Vector3(0.07,0.018,4.1), parking_pos+Vector3(line_x,0.078,0), Color(0.88,0.88,0.82))
+        parking_index += 1
+
+    var house_candidates = [
+        Vector3(-23,0,-20), Vector3(23,0,-20), Vector3(-29,0,10),
+        Vector3(29,0,10), Vector3(-25,0,38), Vector3(25,0,38)
+    ]
+    var house_colors = [Color(0.78,0.68,0.55),Color(0.70,0.76,0.68),Color(0.74,0.65,0.70),Color(0.82,0.76,0.63)]
+    var house_index = 0
+    for house_pos in house_candidates:
+        var house_size = Vector3(randf_range(6.5,9.0),randf_range(6.2,10.5),randf_range(5.0,7.0))
+        if _scenery_position_clear(house_pos, 11.0, 17.0) and _house_footprint_clear(house_pos,house_size):
+            _create_scenery_house(house_pos,house_size,house_colors[house_index % house_colors.size()],house_index)
+            house_index += 1
+
+    var shrub_index = 0
+    for shrub_pos in [Vector3(-9,0,-18),Vector3(-12,0,-8),Vector3(10,0,-19),Vector3(13,0,-8),Vector3(-18,0,31),Vector3(18,0,31)]:
+        if _scenery_position_clear(shrub_pos, 7.0, 7.0):
+            _create_shrub(shrub_pos,randf_range(0.8,1.3),shrub_index)
+            shrub_index += 1
+
+    var car_index = 0
+    var car_specs = [
+        [Vector3(-3.1,0,11.5),0.0,Color(0.12,0.27,0.66)],
+        [Vector3(3.0,0,-13.0),PI,Color(0.76,0.76,0.72)],
+        [Vector3(-15.0,0,27.8),PI/2.0,Color(0.68,0.12,0.10)],
+        [Vector3(17.0,0,28.2),-PI/2.0,Color(0.12,0.48,0.32)],
+        [Vector3(-13.0,0,14.0),0.0,Color(0.75,0.58,0.08)],
+        [Vector3(13.0,0,14.0),PI,Color(0.32,0.32,0.35)]
+    ]
+    for spec in car_specs:
+        var car_pos: Vector3 = spec[0]
+        if _scenery_position_clear(car_pos, 7.5, 7.0):
+            _create_scenery_car(car_pos,float(spec[1]),spec[2],car_index)
+            car_index += 1
 
 func _window_solution(window_node):
     var pivot = elevation_pivot.global_position
@@ -538,6 +700,23 @@ func _clear_target_marker():
     if target_marker != null and is_instance_valid(target_marker):
         target_marker.queue_free()
     target_marker = null
+    if target_person != null and is_instance_valid(target_person):
+        target_person.queue_free()
+    target_person = null
+
+func _create_target_person():
+    if target_window == null:
+        return
+    target_person = Node3D.new()
+    target_person.name = "PersonAtTargetWindow"
+    target_person.position = Vector3(0,-0.12,-0.15)
+    target_window.add_child(target_person)
+    var skin = Color(0.82,0.57,0.42)
+    var clothing = Color(0.10,0.34,0.78)
+    _sphere(target_person,"Head",0.18,Vector3(0,0.28,0),skin)
+    _box(target_person,"Torso",Vector3(0.38,0.50,0.18),Vector3(0,-0.10,0.02),clothing)
+    _bar_between(target_person,"ArmLeft",Vector3(-0.16,0.06,0),Vector3(-0.42,0.34,0),0.09,skin)
+    _bar_between(target_person,"ArmRight",Vector3(0.16,0.06,0),Vector3(0.42,0.34,0),0.09,skin)
 
 func _choose_target():
     _clear_target_marker()
@@ -569,6 +748,7 @@ func _choose_target():
             marker_material.emission_enabled = true
             marker_material.emission = red
             marker_material.emission_energy_multiplier = 2.5
+    _create_target_person()
     previous_target_distance = 999.0
 
 func _build_cameras():
@@ -647,16 +827,31 @@ func _build_hud():
         hud_labels[key] = label
 
     hud_labels["title"].text = "DLK 23/12 – Drehkranz-Bedienstand"
-    hud_labels["help"].text = "W/S Aufrichten | A/D Drehen | E/Q Teleskop\n1–4 Stütze | K/J seitlich | L/I Stempel | C Kamera (inkl. Korb) | R Neustart"
+    hud_labels["help"].text = "W/S Aufrichten | D/A links/rechts drehen | E/Q Teleskop\n1–4 Stütze | K/J seitlich | L/I Stempel | C Kamera | R Neustart | F11 Vollbild"
 
     var center = Label.new()
     center.text = "+"
-    center.position = Vector2(635,348)
+    center.anchor_left = 0.5
+    center.anchor_top = 0.5
+    center.anchor_right = 0.5
+    center.anchor_bottom = 0.5
+    center.offset_left = -10.0
+    center.offset_top = -18.0
+    center.offset_right = 10.0
+    center.offset_bottom = 18.0
+    center.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+    center.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
     center.add_theme_font_size_override("font_size",24)
     canvas.add_child(center)
 
     var hint = Label.new()
-    hint.position = Vector2(420,12)
+    hint.anchor_left = 0.5
+    hint.anchor_right = 0.5
+    hint.offset_left = -210.0
+    hint.offset_top = 12.0
+    hint.offset_right = 210.0
+    hint.offset_bottom = 40.0
+    hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
     hint.text = "Rot markiertes Fenster anleitern"
     hint.add_theme_font_size_override("font_size",16)
     canvas.add_child(hint)
@@ -676,12 +871,13 @@ func _update_supports(delta):
         var side = float(s["side"])
         var out_value = float(d["out"])
         var down_value = float(d["down"])
+        var visual_down = down_value / SUPPORT_MAX_DOWN * SUPPORT_VISUAL_MAX_DOWN
         s["beam"].position.x = side * (0.32 + out_value / 2.0)
         s["beam"].scale.x = 1.0 + out_value / 0.72
         var x = side * (0.48 + out_value)
-        s["jack"].position = Vector3(x,-0.25-down_value/2.0,0)
-        s["jack"].scale.y = 1.0 + down_value / 0.50
-        s["foot"].position = Vector3(x,-0.55-down_value,0)
+        s["jack"].position = Vector3(x,-0.25-visual_down/2.0,0)
+        s["jack"].scale.y = 1.0 + visual_down / 0.50
+        s["foot"].position = Vector3(x,-0.55-visual_down,0)
 
 func _all_supports_grounded():
     return stabilizer_controller.all_grounded()
@@ -804,6 +1000,14 @@ func _update_hud():
 func _cycle_camera():
     active_camera = (active_camera + 1) % cameras.size()
     _set_camera(active_camera)
+
+func _toggle_fullscreen():
+    var window = get_window()
+    if window.mode == Window.MODE_FULLSCREEN or window.mode == Window.MODE_EXCLUSIVE_FULLSCREEN:
+        window.mode = Window.MODE_WINDOWED
+        window.size = Vector2i(1280,720)
+    else:
+        window.mode = Window.MODE_FULLSCREEN
 
 func _set_camera(index):
     for i in range(cameras.size()):

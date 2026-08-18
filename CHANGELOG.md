@@ -1,6 +1,15 @@
 # Changelog
 
 ## v3
+- Drehrichtung der Tastaturbelegung getauscht: D dreht links, A dreht rechts.
+- Reproduzierbare Linux- und Windows-Exports sowie GitHub-Actions-Releaseworkflow ergänzt.
+- Sichtbaren Stempelweg an die reale Bodenhöhe der Szene angepasst; Fußplatten versinken bei Bodenkontakt nicht mehr.
+- Ziel- und Hintergrundhäuser durch Straßen-/Gehweg-Flächenprüfung von Verkehrswegen ferngehalten.
+- Gehwege an der Querstraße getrennt und durch Zebrastreifen auf der Fahrbahn verbunden.
+- Standardmäßiger Vollbildmodus mit skalierender `canvas_items`-/`expand`-Darstellung und F11-Umschaltung ergänzt.
+- Fadenkreuz und Zielhinweis für unterschiedliche Seitenverhältnisse am Bildschirm verankert.
+- Zufällig variierte prozedurale Einsatzumgebung mit Straßen, Parkplätzen, Häusern, Grünflächen, Sträuchern und Fahrzeugen ergänzt.
+- Sichtbare Person am aktiven Zielfenster ergänzt; sie wird beim Zielwechsel zusammen mit der alten Markierung entfernt.
 - Seitlicher Stützenausschub bei Bodenkontakt in beiden Richtungen verriegelt.
 - Automatischer Test für die Abstützungsverriegelung ergänzt.
 - Blender/glTF-Arbeitsstruktur, Modellverträge, Pivotvorgaben und Godot-Komponentenszenen vorbereitet.

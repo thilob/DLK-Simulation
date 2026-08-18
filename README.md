@@ -16,6 +16,8 @@ Ein bewusst generisches 3D-Lernprojekt für die Bedienung einer Feuerwehr-Drehle
 - Bedienpult optisch erweitert (Display, zwei Handregler, Kontrollleuchten).
 - Hausfassade mit Fensterbänken, Regenrohren und Vordach detaillierter.
 - Abstütz-Zustand und Freigabe sind in `scripts/stabilizer_controller.gd` von Darstellung und Eingabe getrennt.
+- Prozedurale Einsatzumgebung mit Straßen, Gehwegen, Parkflächen, Häusern, Rasen, Sträuchern und Fahrzeugen.
+- Am aktiven Zielfenster steht eine sichtbare Person, die nach erfolgreichem Anleitern mit dem alten Ziel verschwindet.
 
 ## Steuerung
 
@@ -24,13 +26,16 @@ Ein bewusst generisches 3D-Lernprojekt für die Bedienung einer Feuerwehr-Drehle
 | 1–4 | einzelne Abstützung auswählen |
 | K / J | ausgewählte Abstützung seitlich aus-/einfahren |
 | L / I | Stempel absenken/einholen |
-| A / D | Drehkranz links/rechts |
+| D / A | Drehkranz links/rechts |
 | W / S | Leiter aufrichten/absenken |
 | E / Q | Leiter aus-/einfahren |
 | C | Kamera wechseln: Maschinist → Korb → Übersicht → außen |
 | R | Szene neu starten; Gebäude und Ziel werden neu gewählt |
+| F11 | zwischen Vollbild und 1280×720-Fenster wechseln |
 
 Bei Bodenkontakt ist der seitliche Ausschub der gewählten Stütze in beiden Richtungen verriegelt. Vor dem Ein- oder Ausfahren muss der Stempel mit `I` so weit angehoben werden, dass kein Bodenkontakt mehr besteht. Das HUD zeigt dann `quer frei` an.
+
+Die Simulation startet standardmäßig im Vollbildmodus. Die 3D-Ansicht nutzt das aktuelle Bildschirmformat; HUD, Fadenkreuz und Zielhinweis werden anhand einer Referenzauflösung von 1280×720 skaliert und am Bildschirm verankert.
 
 ### Joystick
 
@@ -48,7 +53,11 @@ Die Leiter ist erst bewegbar, wenn alle vier Abstützungen (VL, VR, HL, HR) gen�
 
 ## Zielwertung
 
-Das aktuelle Zielfenster ist rot eingerahmt. Ein Punkt wird vergeben, wenn sich der definierte vordere Anleiterpunkt des Korbs auf höchstens 0,50 m dem Fensterzentrum nähert und keine Gebäudekollision besteht. Danach wird automatisch ein anderes gültiges Fenster gewählt.
+Das aktuelle Zielfenster ist rot eingerahmt und durch eine vereinfachte Person im Fenster zusätzlich erkennbar. Ein Punkt wird vergeben, wenn sich der definierte vordere Anleiterpunkt des Korbs auf höchstens 0,50 m dem Fensterzentrum nähert und keine Gebäudekollision besteht. Danach verschwinden die Person und Markierung am bisherigen Fenster; an einem anderen erreichbaren Fenster erscheinen ein neuer Rahmen und eine neue Person.
+
+## Prozedurale Umgebung
+
+Bei jedem Neustart erzeugt das Projekt eine einfache Einsatzszenerie aus Haupt- und Querstraße, Gehwegen, Parkplätzen, zusätzlichen Gebäuden, Rasenflächen, Sträuchern sowie Fahrzeugen auf Straßen und Stellflächen. Das Zielgebäude wird ausschließlich seitlich der Hauptstraße aufgestellt. Flächenprüfungen verhindern, dass weitere Häuser auf Straßen oder Gehwegen stehen. Gehwege enden an der Querstraße und werden dort durch Zebrastreifen auf dem Asphalt fortgesetzt. Platzierungsprüfungen halten außerdem den unmittelbaren Aufstell- und Arbeitsbereich frei. Diese Umgebung ist derzeit dekorativ und gehört nicht zur Leiter-Kollisionsüberwachung.
 
 ## Blender-Modelle
 
@@ -69,3 +78,9 @@ Das Projekt ist ein technisches Lern-/Spielmodell. Maße, Geschwindigkeiten, Ver
 Dieses Projekt steht unter der [MIT-Lizenz](LICENSE). Nutzung, Veränderung und Weitergabe sind auch kommerziell gestattet, sofern der Copyright- und Lizenzhinweis erhalten bleibt.
 
 Copyright © 2026 thilob
+
+## Downloads und Builds
+
+Lauffähige Pakete für Linux x86_64 und Windows x86_64 werden von GitHub Actions mit den offiziellen Godot-4.7.1-Export-Templates erzeugt. Jeder Push auf `main` stellt beide Pakete als Workflow-Artefakte bereit. Ein Tag nach dem Muster `v*` veröffentlicht sie zusätzlich unter [GitHub Releases](https://github.com/thilob/DLK-Simulation/releases).
+
+Linux: ZIP entpacken, `DLK-Simulation.x86_64` ausführbar machen und starten. Windows: ZIP entpacken und `DLK-Simulation.exe` starten. Die Builds sind nicht digital signiert; Betriebssysteme können deshalb eine Sicherheitsabfrage anzeigen.
