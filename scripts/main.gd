@@ -789,7 +789,8 @@ func _update_hud():
 
     var selected_support = stabilizer_controller.selected
     var selected_state = stabilizer_controller.states[selected_support]
-    hud_labels["selected"].text = "Gewählt %s | quer %.2f/%.2f m | Stempel %.2f/%.2f m | %s" % [support_names[selected_support],float(selected_state["out"]),SUPPORT_MAX_OUT,float(selected_state["down"]),SUPPORT_MAX_DOWN,"Bodenkontakt" if bool(selected_state["contact"]) else "kein Kontakt"]
+    var lateral_status = "QUER VERRIEGELT" if stabilizer_controller.lateral_locked() else "quer frei"
+    hud_labels["selected"].text = "Gewählt %s | quer %.2f/%.2f m | Stempel %.2f/%.2f m | %s | %s" % [support_names[selected_support],float(selected_state["out"]),SUPPORT_MAX_OUT,float(selected_state["down"]),SUPPORT_MAX_DOWN,"Bodenkontakt" if bool(selected_state["contact"]) else "kein Kontakt",lateral_status]
     hud_labels["target"].text = "Ziel %.2f m | Soll ~%.1f m / %.1f° / %.1f° Drehung | Achsen %.2f / %.2f / %.2f" % [previous_target_distance,target_required_length,rad_to_deg(target_required_elevation),rad_to_deg(target_required_slew),float(cmd["slew"]),float(cmd["elevate"]),float(cmd["extend"])]
     var collision_text = "frei"
     if collision_warning:

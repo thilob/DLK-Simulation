@@ -30,8 +30,15 @@ func select(index: int):
 
 func update_selected(axis: Vector2, delta: float):
 	var state: Dictionary = states[selected]
-	var lateral: float = clamp(float(state["out"]) + axis.x * speed * delta, 0.0, max_out)
+	var had_ground_contact: bool = bool(state["contact"])
+	var lateral: float = float(state["out"])
 	var vertical: float = float(state["down"])
+
+	# The lateral beam is mechanically interlocked while the foot carries load.
+	# The operator must lift the jack clear of the ground first; on the following
+	# physics frame the beam can be retracted or extended again.
+	if not had_ground_contact:
+		lateral = clamp(lateral + axis.x * speed * delta, 0.0, max_out)
 
 	# A jack may only be lowered after adequate lateral deployment. Retraction is
 	# always allowed so the operator can recover from a partial deployment.
@@ -42,6 +49,10 @@ func update_selected(axis: Vector2, delta: float):
 	state["down"] = vertical
 	state["contact"] = vertical >= max_down * 0.97 and lateral >= max_out * deploy_threshold
 	states[selected] = state
+
+func lateral_locked(index: int = -1) -> bool:
+	var checked_index: int = selected if index < 0 else clampi(index, 0, SUPPORT_COUNT - 1)
+	return bool(states[checked_index]["contact"])
 
 func all_grounded() -> bool:
 	for state in states:

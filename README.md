@@ -30,6 +30,8 @@ Ein bewusst generisches 3D-Lernprojekt für die Bedienung einer Feuerwehr-Drehle
 | C | Kamera wechseln: Maschinist → Korb → Übersicht → außen |
 | R | Szene neu starten; Gebäude und Ziel werden neu gewählt |
 
+Bei Bodenkontakt ist der seitliche Ausschub der gewählten Stütze in beiden Richtungen verriegelt. Vor dem Ein- oder Ausfahren muss der Stempel mit `I` so weit angehoben werden, dass kein Bodenkontakt mehr besteht. Das HUD zeigt dann `quer frei` an.
+
 ### Joystick
 
 Die Leitersteuerung läuft über eine hardware-neutrale Eingabeschicht (`scripts/input_adapter.gd`). Standardbelegung:
@@ -47,6 +49,16 @@ Die Leiter ist erst bewegbar, wenn alle vier Abstützungen (VL, VR, HL, HR) gen�
 ## Zielwertung
 
 Das aktuelle Zielfenster ist rot eingerahmt. Ein Punkt wird vergeben, wenn sich der definierte vordere Anleiterpunkt des Korbs auf höchstens 0,50 m dem Fensterzentrum nähert und keine Gebäudekollision besteht. Danach wird automatisch ein anderes gültiges Fenster gewählt.
+
+## Blender-Modelle
+
+Das Projekt ist für einen schrittweisen Austausch der prozeduralen Platzhalter vorbereitet:
+
+- Blender-Arbeitsdateien und Pivotregeln: [`blender/README.md`](blender/README.md)
+- `.glb`-Zieldateien und verbindliche Node-Namen: [`assets/models/README.md`](assets/models/README.md)
+- Godot-Anker- und Komponentenszenen: `scenes/components/`
+
+Die vorhandenen primitiven Modelle bleiben als funktionsfähiger Fallback erhalten. Sichtbare Blender-Geometrie darf später ersetzt werden, während Bewegungs-, Freigabe- und Kollisionslogik in Godot verbleiben.
 
 ## Hinweis
 

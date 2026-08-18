@@ -1,0 +1,13 @@
+[gd_scene format=3]
+
+[node name="Stabilizer" type="Node3D"]
+
+[node name="Housing" type="Node3D" parent="."]
+
+[node name="Beam" type="Node3D" parent="."]
+
+[node name="Jack" type="Node3D" parent="."]
+
+[node name="Foot" type="Node3D" parent="."]
+
+[node name="ModelMount" type="Node3D" parent="."]

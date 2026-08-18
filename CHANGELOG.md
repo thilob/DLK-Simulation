@@ -1,6 +1,9 @@
 # Changelog
 
 ## v3
+- Seitlicher Stützenausschub bei Bodenkontakt in beiden Richtungen verriegelt.
+- Automatischer Test für die Abstützungsverriegelung ergänzt.
+- Blender/glTF-Arbeitsstruktur, Modellverträge, Pivotvorgaben und Godot-Komponentenszenen vorbereitet.
 - Abstützungszustand und Freigabelogik in einen eigenständigen Controller ausgelagert.
 - Kollisionsfreie Wertungsposition 0,44 m vor dem Zielfenster eingeführt.
 - Zielrahmen emissiv hervorgehoben und Stützen im HUD als VL/VR/HL/HR bezeichnet.

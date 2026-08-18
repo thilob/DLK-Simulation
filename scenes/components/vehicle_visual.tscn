@@ -1,0 +1,20 @@
+[gd_scene format=3]
+
+[node name="VehicleVisual" type="Node3D"]
+
+[node name="BodyModelMount" type="Node3D" parent="."]
+
+[node name="SupportVL" type="Marker3D" parent="."]
+position = Vector3(-1.18, 0.83, -1.55)
+
+[node name="SupportVR" type="Marker3D" parent="."]
+position = Vector3(1.18, 0.83, -1.55)
+
+[node name="SupportHL" type="Marker3D" parent="."]
+position = Vector3(-1.18, 0.83, 2.65)
+
+[node name="SupportHR" type="Marker3D" parent="."]
+position = Vector3(1.18, 0.83, 2.65)
+
+[node name="TurntableMount" type="Marker3D" parent="."]
+position = Vector3(0, 3.02, 2.45)
