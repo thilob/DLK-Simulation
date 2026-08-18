@@ -51,3 +51,9 @@ Das aktuelle Zielfenster ist rot eingerahmt. Ein Punkt wird vergeben, wenn sich 
 ## Hinweis
 
 Das Projekt ist ein technisches Lern-/Spielmodell. Maße, Geschwindigkeiten, Verriegelungen und Bedienkonzept dürfen nicht als reale Bedien- oder Ausbildungsanweisung für eine Drehleiter verwendet werden.
+
+## Lizenz
+
+Dieses Projekt steht unter der [MIT-Lizenz](LICENSE). Nutzung, Veränderung und Weitergabe sind auch kommerziell gestattet, sofern der Copyright- und Lizenzhinweis erhalten bleibt.
+
+Copyright © 2026 thilob
