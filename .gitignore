@@ -1,0 +1,11 @@
+# Godot-generated editor and import cache.
+.godot/
+
+# Local export output.
+build/
+dist/
+exports/
+
+# OS/editor leftovers.
+.DS_Store
+*~
