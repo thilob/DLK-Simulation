@@ -50,6 +50,7 @@ var cameras = []
 var camera_names = []
 var hud_labels = {}
 var windows = []
+var roof_targets = []
 var reachable_windows = []
 
 var vehicle_root
@@ -66,6 +67,7 @@ var scenery_root
 var target_window
 var target_marker
 var target_person
+var quit_dialog
 
 var active_camera = 0
 var operator_camera
@@ -116,6 +118,8 @@ func _physics_process(delta):
         get_tree().reload_current_scene()
     if Input.is_action_just_pressed("fullscreen_toggle"):
         _toggle_fullscreen()
+    if Input.is_action_just_pressed("quit_request"):
+        _request_quit()
 
 func _ensure_action(action_name, deadzone):
     if not InputMap.has_action(action_name):
@@ -142,7 +146,7 @@ func _setup_input_map():
         "extend_ladder", "retract_ladder", "support_out", "support_in",
         "support_down", "support_up", "select_support_1", "select_support_2",
         "select_support_3", "select_support_4", "camera_cycle", "reset_demo",
-        "fullscreen_toggle"
+        "fullscreen_toggle", "quit_request"
     ]
     for action_name in actions:
         _ensure_action(action_name, 0.08)
@@ -164,6 +168,7 @@ func _setup_input_map():
     _add_key("camera_cycle", KEY_C)
     _add_key("reset_demo", KEY_R)
     _add_key("fullscreen_toggle", KEY_F11)
+    _add_key("quit_request", KEY_ESCAPE)
 
     # Generic joystick layout:
     # left X = slew, left Y = elevation, right Y = telescope.
@@ -471,6 +476,7 @@ func _build_building():
             var w = Node3D.new()
             w.name = "Window_%d_%d" % [floor,col]
             w.position = Vector3(x,y,-BUILDING_DEPTH/2.0-0.055)
+            w.set_meta("target_kind","window")
             building_root.add_child(w)
             _box(w, "Pane", Vector3(1.18,1.42,0.055), Vector3.ZERO, glass)
             _box(w, "FrameTop", Vector3(1.36,0.08,0.09), Vector3(0,0.75,-0.02), frame)
@@ -479,6 +485,22 @@ func _build_building():
             _box(w, "FrameRight", Vector3(0.08,1.58,0.09), Vector3(0.64,0,-0.02), frame)
             _box(w, "Mullion", Vector3(0.055,1.42,0.075), Vector3(0,0,-0.04), frame)
             windows.append(w)
+
+    # Several standing rescue positions are distributed over the roof. Their
+    # node origin is at the person's torso/approach height; the feet therefore
+    # rest on the roof while the basket remains above the collision volume.
+    roof_targets.clear()
+    var roof_positions = [
+        Vector2(-4.2,-2.0), Vector2(-2.1,-1.85), Vector2(0.0,-2.0),
+        Vector2(2.1,-1.85), Vector2(4.2,-2.0)
+    ]
+    for roof_index in range(roof_positions.size()):
+        var roof_target = Node3D.new()
+        roof_target.name = "RoofTarget_%d" % roof_index
+        roof_target.position = Vector3(roof_positions[roof_index].x,total_height+1.12,roof_positions[roof_index].y)
+        roof_target.set_meta("target_kind","roof")
+        building_root.add_child(roof_target)
+        roof_targets.append(roof_target)
 
     # Sills, rain pipes and a small entrance canopy add depth to the otherwise
     # deliberately generic training facade.
@@ -632,13 +654,13 @@ func _build_surroundings():
             _create_scenery_car(car_pos,float(spec[1]),spec[2],car_index)
             car_index += 1
 
-func _window_solution(window_node):
+func _target_solution(target_node):
     var pivot = elevation_pivot.global_position
-    var window_pos = window_node.global_position
-    # Solve for a legal scoring pose just outside the facade. At 0.44 m from
-    # the window it is within the 0.50 m scoring tolerance, while the basket's
-    # collision volume remains outside the solid building body.
-    var desired_approach = window_pos + building_root.global_basis * Vector3(0,0,-TARGET_POSE_STANDOFF)
+    var target_pos = target_node.global_position
+    var desired_approach = target_pos
+    # Window and roof-edge rescues are approached from outside the facade. At
+    # 0.44 m the basket stays clear and remains inside the scoring tolerance.
+    desired_approach += building_root.global_basis * Vector3(0,0,-TARGET_POSE_STANDOFF)
     var delta = desired_approach - pivot
     var target_horizontal = Vector2(delta.x, delta.z).length()
     # Approximate inverse kinematics for the scoring point at the front rail:
@@ -671,8 +693,10 @@ func _target_pose_is_clear(solution):
 
 func _rebuild_reachable_window_list():
     reachable_windows.clear()
-    for w in windows:
-        var solution = _window_solution(w)
+    var all_targets = windows.duplicate()
+    all_targets.append_array(roof_targets)
+    for w in all_targets:
+        var solution = _target_solution(w)
         var length = float(solution["length"])
         var angle = float(solution["angle"])
         # Leave enough motion margin for deliberate, slow final approach.
@@ -688,8 +712,8 @@ func _rebuild_reachable_window_list():
         attempts += 1
         var radial = building_root.position.normalized()
         building_root.position += radial * 1.25
-        for w in windows:
-            var retry_solution = _window_solution(w)
+        for w in all_targets:
+            var retry_solution = _target_solution(w)
             var retry_length = float(retry_solution["length"])
             var retry_angle = float(retry_solution["angle"])
             if retry_length >= BASE_LADDER_LENGTH + 0.8 and retry_length <= MAX_LADDER_LENGTH - 0.8 and retry_angle >= MIN_ELEVATION + deg_to_rad(2.0) and retry_angle <= MAX_ELEVATION - deg_to_rad(2.0):
@@ -708,8 +732,9 @@ func _create_target_person():
     if target_window == null:
         return
     target_person = Node3D.new()
-    target_person.name = "PersonAtTargetWindow"
-    target_person.position = Vector3(0,-0.12,-0.15)
+    target_person.name = "PersonAtRescueTarget"
+    var target_kind = String(target_window.get_meta("target_kind","window"))
+    target_person.position = Vector3(0,-0.12,-0.15) if target_kind == "window" else Vector3.ZERO
     target_window.add_child(target_person)
     var skin = Color(0.82,0.57,0.42)
     var clothing = Color(0.10,0.34,0.78)
@@ -717,6 +742,8 @@ func _create_target_person():
     _box(target_person,"Torso",Vector3(0.38,0.50,0.18),Vector3(0,-0.10,0.02),clothing)
     _bar_between(target_person,"ArmLeft",Vector3(-0.16,0.06,0),Vector3(-0.42,0.34,0),0.09,skin)
     _bar_between(target_person,"ArmRight",Vector3(0.16,0.06,0),Vector3(0.42,0.34,0),0.09,skin)
+    _bar_between(target_person,"LegLeft",Vector3(-0.10,-0.30,0.02),Vector3(-0.12,-0.85,0.02),0.11,Color(0.10,0.11,0.16))
+    _bar_between(target_person,"LegRight",Vector3(0.10,-0.30,0.02),Vector3(0.12,-0.85,0.02),0.11,Color(0.10,0.11,0.16))
 
 func _choose_target():
     _clear_target_marker()
@@ -727,9 +754,20 @@ func _choose_target():
     var candidates = reachable_windows.duplicate()
     if target_window != null and candidates.size() > 1:
         candidates.erase(target_window)
-    target_window = candidates[randi() % candidates.size()]
+    var roof_candidates = []
+    var window_candidates = []
+    for candidate in candidates:
+        if String(candidate.get_meta("target_kind","window")) == "roof":
+            roof_candidates.append(candidate)
+        else:
+            window_candidates.append(candidate)
+    # Roof rescues occur regularly but windows remain the more common task.
+    if not roof_candidates.is_empty() and (window_candidates.is_empty() or randf() < 0.35):
+        target_window = roof_candidates[randi() % roof_candidates.size()]
+    else:
+        target_window = window_candidates[randi() % window_candidates.size()]
 
-    var solution = _window_solution(target_window)
+    var solution = _target_solution(target_window)
     target_required_length = float(solution["length"])
     target_required_elevation = float(solution["angle"])
     target_required_slew = float(solution["slew"])
@@ -738,10 +776,16 @@ func _choose_target():
     target_marker.name = "TargetMarker"
     target_window.add_child(target_marker)
     var red = Color(1.0,0.015,0.015)
-    _box(target_marker,"Top",Vector3(1.50,0.09,0.11),Vector3(0,0.82,-0.10),red)
-    _box(target_marker,"Bottom",Vector3(1.50,0.09,0.11),Vector3(0,-0.82,-0.10),red)
-    _box(target_marker,"Left",Vector3(0.09,1.73,0.11),Vector3(-0.75,0,-0.10),red)
-    _box(target_marker,"Right",Vector3(0.09,1.73,0.11),Vector3(0.75,0,-0.10),red)
+    if String(target_window.get_meta("target_kind","window")) == "roof":
+        _box(target_marker,"RoofFront",Vector3(1.55,0.08,0.10),Vector3(0,-0.84,-0.72),red)
+        _box(target_marker,"RoofBack",Vector3(1.55,0.08,0.10),Vector3(0,-0.84,0.72),red)
+        _box(target_marker,"RoofLeft",Vector3(0.10,0.08,1.55),Vector3(-0.72,-0.84,0),red)
+        _box(target_marker,"RoofRight",Vector3(0.10,0.08,1.55),Vector3(0.72,-0.84,0),red)
+    else:
+        _box(target_marker,"Top",Vector3(1.50,0.09,0.11),Vector3(0,0.82,-0.10),red)
+        _box(target_marker,"Bottom",Vector3(1.50,0.09,0.11),Vector3(0,-0.82,-0.10),red)
+        _box(target_marker,"Left",Vector3(0.09,1.73,0.11),Vector3(-0.75,0,-0.10),red)
+        _box(target_marker,"Right",Vector3(0.09,1.73,0.11),Vector3(0.75,0,-0.10),red)
     for marker_child in target_marker.get_children():
         if marker_child is MeshInstance3D:
             var marker_material = marker_child.material_override
@@ -800,7 +844,7 @@ func _update_cameras(delta):
         operator_camera.rotation.z = 0.0
 
     if basket_camera != null and target_window != null:
-        # From the basket, always look toward the active marked window.
+        # From the basket, always look toward the active rescue target.
         var target = target_window.global_position + Vector3(0,0.05,0)
         if basket_camera.global_position.distance_to(target) > 0.2:
             basket_camera.look_at(target, Vector3.UP)
@@ -823,11 +867,13 @@ func _build_hud():
     for key in ["title","state","motion","geometry","supports","selected","target","collision","camera","score","help"]:
         var label = Label.new()
         label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+        label.add_theme_font_size_override("font_size",9)
         vbox.add_child(label)
         hud_labels[key] = label
 
+    hud_labels["title"].add_theme_font_size_override("font_size",11)
     hud_labels["title"].text = "DLK 23/12 – Drehkranz-Bedienstand"
-    hud_labels["help"].text = "W/S Aufrichten | D/A links/rechts drehen | E/Q Teleskop\n1–4 Stütze | K/J seitlich | L/I Stempel | C Kamera | R Neustart | F11 Vollbild"
+    hud_labels["help"].text = "W/S Aufrichten | D/A links/rechts drehen | E/Q Teleskop\n1–4 Stütze | K/J seitlich | L/I Stempel | C Kamera | R Neustart | F11 Vollbild | Esc Beenden"
 
     var center = Label.new()
     center.text = "+"
@@ -852,9 +898,18 @@ func _build_hud():
     hint.offset_right = 210.0
     hint.offset_bottom = 40.0
     hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-    hint.text = "Rot markiertes Fenster anleitern"
-    hint.add_theme_font_size_override("font_size",16)
+    hint.text = "Rot markiertes Rettungsziel anleitern"
+    hint.add_theme_font_size_override("font_size",10)
     canvas.add_child(hint)
+
+    quit_dialog = ConfirmationDialog.new()
+    quit_dialog.title = "Simulation beenden?"
+    quit_dialog.dialog_text = "Soll die DLK-Simulation wirklich beendet werden?"
+    quit_dialog.ok_button_text = "Beenden"
+    quit_dialog.get_cancel_button().text = "Abbrechen"
+    quit_dialog.exclusive = true
+    quit_dialog.confirmed.connect(_confirm_quit)
+    canvas.add_child(quit_dialog)
 
 func _handle_selection():
     for i in range(4):
@@ -987,7 +1042,8 @@ func _update_hud():
     var selected_state = stabilizer_controller.states[selected_support]
     var lateral_status = "QUER VERRIEGELT" if stabilizer_controller.lateral_locked() else "quer frei"
     hud_labels["selected"].text = "Gewählt %s | quer %.2f/%.2f m | Stempel %.2f/%.2f m | %s | %s" % [support_names[selected_support],float(selected_state["out"]),SUPPORT_MAX_OUT,float(selected_state["down"]),SUPPORT_MAX_DOWN,"Bodenkontakt" if bool(selected_state["contact"]) else "kein Kontakt",lateral_status]
-    hud_labels["target"].text = "Ziel %.2f m | Soll ~%.1f m / %.1f° / %.1f° Drehung | Achsen %.2f / %.2f / %.2f" % [previous_target_distance,target_required_length,rad_to_deg(target_required_elevation),rad_to_deg(target_required_slew),float(cmd["slew"]),float(cmd["elevate"]),float(cmd["extend"])]
+    var target_kind_text = "DACH" if target_window != null and String(target_window.get_meta("target_kind","window")) == "roof" else "FENSTER"
+    hud_labels["target"].text = "Ziel %s %.2f m | Soll ~%.1f m / %.1f° / %.1f° Drehung | Achsen %.2f / %.2f / %.2f" % [target_kind_text,previous_target_distance,target_required_length,rad_to_deg(target_required_elevation),rad_to_deg(target_required_slew),float(cmd["slew"]),float(cmd["elevate"]),float(cmd["extend"])]
     var collision_text = "frei"
     if collision_warning:
         collision_text = "KONTAKT"
@@ -1008,6 +1064,13 @@ func _toggle_fullscreen():
         window.size = Vector2i(1280,720)
     else:
         window.mode = Window.MODE_FULLSCREEN
+
+func _request_quit():
+    if quit_dialog != null and not quit_dialog.visible:
+        quit_dialog.popup_centered(Vector2i(430,170))
+
+func _confirm_quit():
+    get_tree().quit()
 
 func _set_camera(index):
     for i in range(cameras.size()):

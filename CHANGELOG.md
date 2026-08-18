@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.4.1
+- Escape-Bestätigungsdialog ergänzt; die Anwendung endet nur nach positiver Bestätigung.
+- Fünf erreichbarkeitsgeprüfte Rettungspositionen mit Personen auf der Dachoberfläche ergänzt.
+- Zufälliger Zielwechsel zwischen Fenster- und Dachrettung sowie automatischer Szenentest ergänzt.
+- HUD-Schriftgröße für eine weniger verdeckte 3D-Ansicht ungefähr halbiert.
+
 ## v3
 - Drehrichtung der Tastaturbelegung getauscht: D dreht links, A dreht rechts.
 - Reproduzierbare Linux- und Windows-Exports sowie GitHub-Actions-Releaseworkflow ergänzt.

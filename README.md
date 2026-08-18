@@ -32,6 +32,7 @@ Ein bewusst generisches 3D-Lernprojekt für die Bedienung einer Feuerwehr-Drehle
 | C | Kamera wechseln: Maschinist → Korb → Übersicht → außen |
 | R | Szene neu starten; Gebäude und Ziel werden neu gewählt |
 | F11 | zwischen Vollbild und 1280×720-Fenster wechseln |
+| Escape | Sicherheitsabfrage zum Beenden öffnen |
 
 Bei Bodenkontakt ist der seitliche Ausschub der gewählten Stütze in beiden Richtungen verriegelt. Vor dem Ein- oder Ausfahren muss der Stempel mit `I` so weit angehoben werden, dass kein Bodenkontakt mehr besteht. Das HUD zeigt dann `quer frei` an.
 
@@ -53,7 +54,11 @@ Die Leiter ist erst bewegbar, wenn alle vier Abstützungen (VL, VR, HL, HR) gen�
 
 ## Zielwertung
 
-Das aktuelle Zielfenster ist rot eingerahmt und durch eine vereinfachte Person im Fenster zusätzlich erkennbar. Ein Punkt wird vergeben, wenn sich der definierte vordere Anleiterpunkt des Korbs auf höchstens 0,50 m dem Fensterzentrum nähert und keine Gebäudekollision besteht. Danach verschwinden die Person und Markierung am bisherigen Fenster; an einem anderen erreichbaren Fenster erscheinen ein neuer Rahmen und eine neue Person.
+Das aktuelle Rettungsziel ist rot eingerahmt und durch eine vereinfachte Person zusätzlich erkennbar. Neben Fenstern stehen fünf mögliche Rettungspositionen auf der Dachoberfläche zur Verfügung. Bei jedem Zielwechsel wird zufällig zwischen einem Fenster- und mit etwa 35 % Wahrscheinlichkeit einem erreichbaren Dachziel gewählt.
+
+Ein Punkt wird vergeben, wenn sich der definierte vordere Anleiterpunkt des Korbs auf höchstens 0,50 m dem Ziel nähert und keine Gebäudekollision besteht. Danach verschwinden die Person und Markierung am bisherigen Ort; an einem anderen erreichbaren Ziel erscheinen ein neuer Rahmen und eine neue Person. Fenster- und Dachziele werden vor der Auswahl auf erforderliche Leiterlänge, Aufrichtewinkel und kollisionsfreie Zielpose geprüft.
+
+`Escape` beendet das Programm nicht unmittelbar, sondern öffnet einen modalen Dialog. Erst die Schaltfläche `Beenden` terminiert die Anwendung; `Abbrechen` setzt die Simulation fort.
 
 ## Prozedurale Umgebung
 
