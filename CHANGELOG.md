@@ -1,6 +1,7 @@
 # Changelog
 
 ## v0.4.1
+- Direkten Godot-4.7-Import von `.blend` aktiviert, Blender-Startdatei und reproduzierbaren CI-Import ergänzt.
 - Stufenloser, je Kamera gespeicherter Zoom über Plus/Minus einschließlich Ziffernblock ergänzt.
 - Escape-Bestätigungsdialog ergänzt; die Anwendung endet nur nach positiver Bestätigung.
 - Fünf erreichbarkeitsgeprüfte Rettungspositionen mit Personen auf der Dachoberfläche ergänzt.

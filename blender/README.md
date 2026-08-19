@@ -1,7 +1,20 @@
 # Blender source workflow
 
-Store editable `.blend` source files here. Recommended master file:
-`dlk_vehicle.blend`. Export individual collections to `assets/models/*.glb`.
+Godot 4.7 imports `.blend` files directly by invoking Blender's glTF exporter
+in the background. The editable master file is `dlk_vehicle.blend`; saving it
+while the Godot editor is open triggers a reimport without a manual `.glb`
+export. Blender 3.0 or newer must be installed and discoverable by Godot.
+
+The supplied file is a scale and hierarchy scaffold, not a finished vehicle.
+It can be regenerated with:
+
+```bash
+blender --background --factory-startup --python blender/create_dlk_template.py
+```
+
+If Godot does not find Blender automatically, set its executable under
+`Editor Settings > Filesystem > Import > Blender > Blender Path`. The project
+explicitly enables `filesystem/import/blender/enabled`.
 
 ## Collection layout
 
@@ -34,6 +47,13 @@ approximately 10.2 m long and 2.5 m wide and is the scale reference.
 
 Keep moving pieces as separate objects. Never join a stabilizer's Housing,
 Beam, Jack and Foot into one mesh.
+
+## Optional `.glb` export
+
+Direct `.blend` import is the normal editing workflow. Individual collections
+may still be exported to `assets/models/*.glb` when an engine-ready interchange
+file is needed or a collaborator cannot install Blender. Do not commit both
+formats for the same production model unless that fallback is intentional.
 
 ## Materials and licensing
 

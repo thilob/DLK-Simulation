@@ -1,7 +1,8 @@
 # External 3D models
 
-Place Blender exports here as glTF Binary (`.glb`). Keep the source `.blend`
-files in `blender/`; this directory contains the engine-ready exports.
+Godot imports the editable `blender/dlk_vehicle.blend` directly. Place optional
+glTF Binary (`.glb`) exports here only when an engine-ready interchange copy is
+needed. Direct `.blend` import and `.glb` use the same Godot glTF pipeline.
 
 Planned model files and required root/node names:
 

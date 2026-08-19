@@ -21,6 +21,12 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v5
 
+      - name: Install Blender for direct .blend imports
+        shell: bash
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes blender
+
       - name: Install Godot 4.7.1 and export templates
         shell: bash
         run: |
@@ -45,6 +51,16 @@ jobs:
       - name: Validate project
         shell: bash
         run: |
+          settings_dir="${HOME}/.config/godot"
+          settings_file="${settings_dir}/editor_settings-4.7.tres"
+          mkdir -p "${settings_dir}"
+          printf '%s\n' \
+            '[gd_resource type="EditorSettings" format=3]' \
+            '' \
+            '[resource]' \
+            'filesystem/import/blender/blender_path = "/usr/bin/blender"' \
+            'filesystem/import/blender/rpc_port = 0' \
+            > "${settings_file}"
           "Godot_v${GODOT_VERSION}-${GODOT_STATUS}_linux.x86_64" \
             --headless --path . --editor --quit
 

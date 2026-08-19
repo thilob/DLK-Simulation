@@ -72,10 +72,13 @@ Bei jedem Neustart erzeugt das Projekt eine einfache Einsatzszenerie aus Haupt- 
 Das Projekt ist für einen schrittweisen Austausch der prozeduralen Platzhalter vorbereitet:
 
 - Blender-Arbeitsdateien und Pivotregeln: [`blender/README.md`](blender/README.md)
-- `.glb`-Zieldateien und verbindliche Node-Namen: [`assets/models/README.md`](assets/models/README.md)
+- direkt importierte `.blend`-Quelle: `blender/dlk_vehicle.blend`
+- optionale `.glb`-Zieldateien und verbindliche Node-Namen: [`assets/models/README.md`](assets/models/README.md)
 - Godot-Anker- und Komponentenszenen: `scenes/components/`
 
 Die vorhandenen primitiven Modelle bleiben als funktionsfähiger Fallback erhalten. Sichtbare Blender-Geometrie darf später ersetzt werden, während Bewegungs-, Freigabe- und Kollisionslogik in Godot verbleiben.
+
+Godot 4.7 verarbeitet `.blend` nicht mit einem eigenen Blender-Dateileser, sondern startet eine installierte Blender-Version und übernimmt deren glTF-Export automatisch. Deshalb installiert auch der GitHub-Actions-Workflow Blender, bevor Godot das Projekt importiert und exportiert.
 
 ## Hinweis
 
