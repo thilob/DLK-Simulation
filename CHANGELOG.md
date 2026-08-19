@@ -1,6 +1,8 @@
 # Changelog
 
 ## v0.4.1
+- Eigene Blender-Bearbeitungsanleitung mit Maß-, Hierarchie- und Pivotregeln ergänzt.
+- Schrittweise Integrationsanleitung für Blender-Meshes, Godot-Rig, Kollisionen und Fallback ergänzt.
 - Start-Intro mit Projektname, GitHub-Adresse, Verfasser und KI-Hinweis ergänzt.
 - Blender-DLK vom einfachen Stub auf den vollständigen Detaillierungsumfang des prozeduralen Godot-Modells erweitert.
 - Direkten Godot-4.7-Import von `.blend` aktiviert, Blender-Startdatei und reproduzierbaren CI-Import ergänzt.

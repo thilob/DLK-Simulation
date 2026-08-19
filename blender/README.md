@@ -1,5 +1,10 @@
 # Blender source workflow
 
+Die ausführliche Anleitung für Änderungen am Fahrzeugmodell befindet sich in
+[`EDITING_DLK.md`](EDITING_DLK.md).
+Die spätere Verwendung des Modells in der laufenden Simulation beschreibt
+[`INTEGRATING_DLK.md`](INTEGRATING_DLK.md).
+
 Godot 4.7 imports `.blend` files directly by invoking Blender's glTF exporter
 in the background. The editable master file is `dlk_vehicle.blend`; saving it
 while the Godot editor is open triggers a reimport without a manual `.glb`

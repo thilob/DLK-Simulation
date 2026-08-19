@@ -76,6 +76,8 @@ Bei jedem Neustart erzeugt das Projekt eine einfache Einsatzszenerie aus Haupt- 
 Das Projekt ist für einen schrittweisen Austausch der prozeduralen Platzhalter vorbereitet:
 
 - Blender-Arbeitsdateien und Pivotregeln: [`blender/README.md`](blender/README.md)
+- Bearbeitungsregeln für das DLK-Modell: [`blender/EDITING_DLK.md`](blender/EDITING_DLK.md)
+- Integrationsanleitung für das sichtbare Blender-DLK: [`blender/INTEGRATING_DLK.md`](blender/INTEGRATING_DLK.md)
 - direkt importierte `.blend`-Quelle: `blender/dlk_vehicle.blend`
 - Blender-Grundmodelle für Gebäude, Pkw, Strauch und Rettungsperson: `blender/*.blend`
 - optionale `.glb`-Zieldateien und verbindliche Node-Namen: [`assets/models/README.md`](assets/models/README.md)
