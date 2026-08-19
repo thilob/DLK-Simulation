@@ -73,6 +73,7 @@ Das Projekt ist für einen schrittweisen Austausch der prozeduralen Platzhalter 
 
 - Blender-Arbeitsdateien und Pivotregeln: [`blender/README.md`](blender/README.md)
 - direkt importierte `.blend`-Quelle: `blender/dlk_vehicle.blend`
+- Blender-Grundmodelle für Gebäude, Pkw, Strauch und Rettungsperson: `blender/*.blend`
 - optionale `.glb`-Zieldateien und verbindliche Node-Namen: [`assets/models/README.md`](assets/models/README.md)
 - Godot-Anker- und Komponentenszenen: `scenes/components/`
 

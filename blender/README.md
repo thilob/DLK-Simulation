@@ -12,6 +12,19 @@ It can be regenerated with:
 blender --background --factory-startup --python blender/create_dlk_template.py
 ```
 
+Reusable blockouts corresponding to the procedural scenery can be regenerated
+with:
+
+```bash
+blender --background --factory-startup --python blender/create_generic_templates.py
+```
+
+This creates separate editable sources for the training building, background
+house, passenger car, shrub and rescue person. They deliberately remain simple
+and use the dimensions and important marker names from `scripts/main.gd`.
+Roads, sidewalks, parking areas, lawns and zebra crossings remain procedural in
+Godot because their dimensions and placement are coupled to clearance checks.
+
 If Godot does not find Blender automatically, set its executable under
 `Editor Settings > Filesystem > Import > Blender > Blender Path`. The project
 explicitly enables `filesystem/import/blender/enabled`.
@@ -47,6 +60,17 @@ approximately 10.2 m long and 2.5 m wide and is the scale reference.
 
 Keep moving pieces as separate objects. Never join a stabilizer's Housing,
 Beam, Jack and Foot into one mesh.
+
+## Generic scenery templates
+
+- `training_building.blend`: facade blockout plus window and roof target empties
+- `scenery_house.blend`: scalable secondary-building starting point
+- `scenery_car.blend`: generic parked/road vehicle
+- `shrub.blend`: trunk and separate foliage volumes
+- `rescue_person.blend`: person blockout with a rescue approach marker
+
+These files are modeling foundations and are not yet instantiated by the game.
+Keep their root collections and marker names stable when replacing geometry.
 
 ## Optional `.glb` export
 

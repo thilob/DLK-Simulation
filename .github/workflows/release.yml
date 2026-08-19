@@ -59,7 +59,6 @@ jobs:
             '' \
             '[resource]' \
             'filesystem/import/blender/blender_path = "/usr/bin/blender"' \
-            'filesystem/import/blender/rpc_port = 0' \
             > "${settings_file}"
           "Godot_v${GODOT_VERSION}-${GODOT_STATUS}_linux.x86_64" \
             --headless --path . --editor --quit
