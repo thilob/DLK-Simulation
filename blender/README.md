@@ -5,7 +5,10 @@ in the background. The editable master file is `dlk_vehicle.blend`; saving it
 while the Godot editor is open triggers a reimport without a manual `.glb`
 export. Blender 3.0 or newer must be installed and discoverable by Godot.
 
-The supplied file is a scale and hierarchy scaffold, not a finished vehicle.
+The supplied file reproduces the detailed generic Godot vehicle as an editable
+Blender blockout. It includes the body equipment, wheels, four separate
+stabilizers, operator station, four trussed ladder stages and rescue basket.
+It remains a modeling foundation rather than a manufacturer-accurate vehicle.
 It can be regenerated with:
 
 ```bash
@@ -28,6 +31,11 @@ Godot because their dimensions and placement are coupled to clearance checks.
 If Godot does not find Blender automatically, set its executable under
 `Editor Settings > Filesystem > Import > Blender > Blender Path`. The project
 explicitly enables `filesystem/import/blender/enabled`.
+
+On Arch Linux, the distribution build of Blender uses the system Python. If
+startup reports `ModuleNotFoundError: No module named 'cattrs'`, install the
+official repository package with `sudo pacman -Syu python-cattrs`. Do not use
+`sudo pip` to modify the system Python.
 
 ## Collection layout
 

@@ -2,6 +2,10 @@
 
 Ein bewusst generisches 3D-Lernprojekt für die Bedienung einer Feuerwehr-Drehleiter vom Maschinistenplatz am Drehkranz. Es ist **kein** Hersteller-, Ausbildungs- oder Sicherheitsmodell und bildet keine reale Freistandsgrenze ab.
 
+Beim Programmstart erscheint ein Intro mit Projektname, GitHub-Adresse und
+Verfasser. Die Simulation beginnt über die Schaltfläche oder mit Enter beziehungsweise
+Leertaste.
+
 ## Neu in v3
 
 - Leiter liegt beim Start vollständig eingefahren und auf sichtbaren Ablageböcken über dem Fahrzeugaufbau/Fahrerhaus.
@@ -90,6 +94,13 @@ Das Projekt ist ein technisches Lern-/Spielmodell. Maße, Geschwindigkeiten, Ver
 Dieses Projekt steht unter der [MIT-Lizenz](LICENSE). Nutzung, Veränderung und Weitergabe sind auch kommerziell gestattet, sofern der Copyright- und Lizenzhinweis erhalten bleibt.
 
 Copyright © 2026 thilob
+
+## Entstehung und KI-Unterstützung
+
+Dieses Projekt wurde von thilob unter Zuhilfenahme generativer KI entwickelt.
+KI-Werkzeuge unterstützten insbesondere bei Programmierung, Dokumentation und
+der Erzeugung editierbarer Blender-Grundmodelle. Verantwortung für Auswahl,
+Prüfung und Veröffentlichung der Projektinhalte trägt der Verfasser.
 
 ## Downloads und Builds
 

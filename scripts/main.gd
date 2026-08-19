@@ -71,6 +71,8 @@ var target_window
 var target_marker
 var target_person
 var quit_dialog
+var intro_overlay
+var intro_visible = true
 
 var active_camera = 0
 var operator_camera
@@ -97,11 +99,16 @@ func _ready():
     _build_surroundings()
     _build_cameras()
     _build_hud()
+    _build_intro()
     _apply_ladder_geometry()
     _rebuild_reachable_window_list()
     _choose_target()
 
 func _physics_process(delta):
+    if intro_visible:
+        if Input.is_action_just_pressed("quit_request"):
+            _request_quit()
+        return
     _handle_selection()
     _update_supports(delta)
     _update_ladder(delta)
@@ -124,6 +131,12 @@ func _physics_process(delta):
         _toggle_fullscreen()
     if Input.is_action_just_pressed("quit_request"):
         _request_quit()
+
+func _unhandled_input(event):
+    if intro_visible and event is InputEventKey and event.pressed and not event.echo:
+        if event.keycode == KEY_ENTER or event.keycode == KEY_KP_ENTER or event.keycode == KEY_SPACE:
+            _dismiss_intro()
+            get_viewport().set_input_as_handled()
 
 func _ensure_action(action_name, deadzone):
     if not InputMap.has_action(action_name):
@@ -924,6 +937,68 @@ func _build_hud():
     quit_dialog.exclusive = true
     quit_dialog.confirmed.connect(_confirm_quit)
     canvas.add_child(quit_dialog)
+
+func _build_intro():
+    var intro_canvas = CanvasLayer.new()
+    intro_canvas.layer = 100
+    add_child(intro_canvas)
+
+    intro_overlay = ColorRect.new()
+    intro_overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+    intro_overlay.color = Color(0.01,0.018,0.026,0.96)
+    intro_overlay.mouse_filter = Control.MOUSE_FILTER_STOP
+    intro_canvas.add_child(intro_overlay)
+
+    var center = CenterContainer.new()
+    center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+    intro_overlay.add_child(center)
+
+    var content = VBoxContainer.new()
+    content.custom_minimum_size = Vector2(620,300)
+    content.alignment = BoxContainer.ALIGNMENT_CENTER
+    content.add_theme_constant_override("separation",18)
+    center.add_child(content)
+
+    var title = Label.new()
+    title.text = "DLK-Simulation"
+    title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+    title.add_theme_font_size_override("font_size",38)
+    content.add_child(title)
+
+    var subtitle = Label.new()
+    subtitle.text = "Generische Drehleiter-Simulation · Godot 4.7.1"
+    subtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+    subtitle.add_theme_font_size_override("font_size",18)
+    content.add_child(subtitle)
+
+    var credits = Label.new()
+    credits.text = "Verfasser: thilob\nhttps://github.com/thilob/DLK-Simulation\nMit Unterstützung generativer KI erstellt"
+    credits.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+    credits.add_theme_font_size_override("font_size",16)
+    content.add_child(credits)
+
+    var start_button = Button.new()
+    start_button.text = "Simulation starten"
+    start_button.custom_minimum_size = Vector2(260,52)
+    start_button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+    start_button.add_theme_font_size_override("font_size",17)
+    start_button.pressed.connect(_dismiss_intro)
+    content.add_child(start_button)
+
+    var key_hint = Label.new()
+    key_hint.text = "Enter oder Leertaste"
+    key_hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+    key_hint.add_theme_font_size_override("font_size",12)
+    content.add_child(key_hint)
+    start_button.grab_focus()
+
+func _dismiss_intro():
+    if not intro_visible:
+        return
+    intro_visible = false
+    if intro_overlay != null:
+        intro_overlay.get_parent().queue_free()
+        intro_overlay = null
 
 func _handle_selection():
     for i in range(4):
