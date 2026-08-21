@@ -15,7 +15,7 @@ env:
 
 jobs:
   export:
-    name: Export Linux and Windows
+    name: Export Linux, Windows and macOS
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository
@@ -73,6 +73,8 @@ jobs:
             build/linux/DLK-Simulation.x86_64
           "${godot}" --headless --path . --export-release Windows \
             build/windows/DLK-Simulation.exe
+          "${godot}" --headless --path . --export-release macOS \
+            dist/DLK-Simulation-macOS-Universal.zip
           chmod +x build/linux/DLK-Simulation.x86_64
           (cd build/linux && zip -9 ../../dist/DLK-Simulation-Linux-x86_64.zip ./*)
           (cd build/windows && zip -9 ../../dist/DLK-Simulation-Windows-x86_64.zip ./*)

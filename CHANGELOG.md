@@ -1,5 +1,8 @@
 # Changelog
 
+## v0.4.3
+- Automatischen Universal-2-Export für Intel- und Apple-Silicon-Macs ergänzt.
+
 ## v0.4.1
 - Eigene Blender-Bearbeitungsanleitung mit Maß-, Hierarchie- und Pivotregeln ergänzt.
 - Schrittweise Integrationsanleitung für Blender-Meshes, Godot-Rig, Kollisionen und Fallback ergänzt.

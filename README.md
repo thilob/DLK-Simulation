@@ -106,6 +106,8 @@ Prüfung und Veröffentlichung der Projektinhalte trägt der Verfasser.
 
 ## Downloads und Builds
 
-Lauffähige Pakete für Linux x86_64 und Windows x86_64 werden von GitHub Actions mit den offiziellen Godot-4.7.1-Export-Templates erzeugt. Jeder Push auf `main` stellt beide Pakete als Workflow-Artefakte bereit. Ein Tag nach dem Muster `v*` veröffentlicht sie zusätzlich unter [GitHub Releases](https://github.com/thilob/DLK-Simulation/releases).
+Lauffähige Pakete für Linux x86_64, Windows x86_64 und macOS Universal 2 werden von GitHub Actions mit den offiziellen Godot-4.7.1-Export-Templates erzeugt. Jeder Push auf `main` stellt die Pakete als Workflow-Artefakte bereit. Ein Tag nach dem Muster `v*` veröffentlicht sie zusätzlich unter [GitHub Releases](https://github.com/thilob/DLK-Simulation/releases).
 
 Linux: ZIP entpacken, `DLK-Simulation.x86_64` ausführbar machen und starten. Windows: ZIP entpacken und `DLK-Simulation.exe` starten. Die Builds sind nicht digital signiert; Betriebssysteme können deshalb eine Sicherheitsabfrage anzeigen.
+
+macOS: ZIP entpacken und `DLK-Simulation.app` nach `Programme` verschieben. Das Universal-2-Paket unterstützt Intel- und Apple-Silicon-Macs, ist aber mangels Apple-Developer-Zertifikat nicht signiert oder notarisiert. Falls Gatekeeper den Download blockiert, kann die Quarantäne im Terminal mit `xattr -dr com.apple.quarantine "/Applications/DLK-Simulation.app"` entfernt und die Anwendung anschließend per Rechtsklick und `Öffnen` gestartet werden.
